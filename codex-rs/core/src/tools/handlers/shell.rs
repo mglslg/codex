@@ -78,6 +78,7 @@ async fn run_exec_like(args: RunExecLikeArgs) -> Result<FunctionToolOutput, Func
             "shell is unavailable in this session".to_string(),
         ));
     };
+    let runtime_workspace = turn.runtime_workspace.snapshot().await;
     let fs = turn_environment.environment.get_filesystem();
 
     let explicit_env_overrides = turn.shell_environment_policy.r#set.clone();
@@ -166,9 +167,8 @@ async fn run_exec_like(args: RunExecLikeArgs) -> Result<FunctionToolOutput, Func
         .create_exec_approval_requirement_for_command(ExecApprovalRequest {
             command: &exec_params.command,
             approval_policy: turn.approval_policy.value(),
-            permission_profile: turn.permission_profile(),
-            #[allow(deprecated)]
-            sandbox_cwd: turn.cwd.as_path(),
+            permission_profile: runtime_workspace.permission_profile.clone(),
+            sandbox_cwd: runtime_workspace.cwd.as_path(),
             sandbox_permissions: if effective_additional_permissions.permissions_preapproved {
                 codex_protocol::models::SandboxPermissions::UseDefault
             } else {
