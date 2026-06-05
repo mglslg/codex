@@ -1435,10 +1435,6 @@ fn normalize_adds_missing_output_for_function_call_inserts_output() {
     }];
     let mut h = create_history_with_items(items);
     h.normalize_history(&default_input_modalities());
-    let output_id = h.raw_items()[1]
-        .id()
-        .expect("synthetic function output should have an id");
-    assert!(output_id.starts_with("fco_"));
     assert_eq!(
         h.raw_items(),
         vec![
@@ -1450,7 +1446,7 @@ fn normalize_adds_missing_output_for_function_call_inserts_output() {
                 call_id: "call-x".to_string(),
             },
             ResponseItem::FunctionCallOutput {
-                id: Some(output_id.to_string()),
+                id: None,
                 call_id: "call-x".to_string(),
                 output: FunctionCallOutputPayload::from_text("aborted".to_string()),
             },
@@ -1471,10 +1467,6 @@ fn normalize_adds_missing_output_for_tool_search_call() {
 
     h.normalize_history(&default_input_modalities());
 
-    let output_id = h.raw_items()[1]
-        .id()
-        .expect("synthetic tool search output should have an id");
-    assert!(output_id.starts_with("tso_"));
     assert_eq!(
         h.raw_items(),
         vec![
@@ -1486,7 +1478,7 @@ fn normalize_adds_missing_output_for_tool_search_call() {
                 arguments: "{}".into(),
             },
             ResponseItem::ToolSearchOutput {
-                id: Some(output_id.to_string()),
+                id: None,
                 call_id: Some("search-call-x".to_string()),
                 status: "completed".to_string(),
                 execution: "client".to_string(),

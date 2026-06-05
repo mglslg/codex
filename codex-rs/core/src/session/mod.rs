@@ -2581,7 +2581,7 @@ impl Session {
         let items: Vec<ResponseItem> = items
             .iter()
             .cloned()
-            .map(ResponseItem::with_client_generated_id)
+            .map(ResponseItem::with_new_client_generated_id_if_missing)
             .collect();
         {
             let mut state = self.state.lock().await;
@@ -2655,13 +2655,8 @@ impl Session {
         &self,
         items: Vec<ResponseItem>,
         reference_context_item: Option<TurnContextItem>,
-        mut compacted_item: CompactedItem,
+        compacted_item: CompactedItem,
     ) {
-        let replacement_history_matches_items =
-            compacted_item.replacement_history.as_ref() == Some(&items);
-        if replacement_history_matches_items {
-            compacted_item.replacement_history = Some(items.clone());
-        }
         {
             let mut state = self.state.lock().await;
             state.replace_history(items, reference_context_item.clone());

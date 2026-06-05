@@ -362,7 +362,6 @@ impl ToolOutput for GeneratedImageOutput {
             });
         }
         ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: call_id.to_string(),
             output: FunctionCallOutputPayload {
                 body: FunctionCallOutputBody::ContentItems(content),

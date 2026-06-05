@@ -87,7 +87,6 @@ impl ToolOutput for McpToolOutput {
 
     fn to_response_item(&self, call_id: &str, _payload: &ToolPayload) -> ResponseInputItem {
         ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: call_id.to_string(),
             output: self.response_payload(),
         }
@@ -166,7 +165,6 @@ impl ToolOutput for ToolSearchOutput {
 
     fn to_response_item(&self, call_id: &str, _payload: &ToolPayload) -> ResponseInputItem {
         ResponseInputItem::ToolSearchOutput {
-            id: None,
             call_id: call_id.to_string(),
             status: "completed".to_string(),
             execution: "client".to_string(),
@@ -289,7 +287,6 @@ impl ToolOutput for AbortedToolOutput {
     fn to_response_item(&self, call_id: &str, payload: &ToolPayload) -> ResponseInputItem {
         match payload {
             ToolPayload::ToolSearch { .. } => ResponseInputItem::ToolSearchOutput {
-                id: None,
                 call_id: call_id.to_string(),
                 status: "completed".to_string(),
                 execution: "client".to_string(),
@@ -453,7 +450,6 @@ fn function_tool_response(
 
     if matches!(payload, ToolPayload::Custom { .. }) {
         return ResponseInputItem::CustomToolCallOutput {
-            id: None,
             call_id: call_id.to_string(),
             name: None,
             output: FunctionCallOutputPayload { body, success },
@@ -461,7 +457,6 @@ fn function_tool_response(
     }
 
     ResponseInputItem::FunctionCallOutput {
-        id: None,
         call_id: call_id.to_string(),
         output: FunctionCallOutputPayload { body, success },
     }

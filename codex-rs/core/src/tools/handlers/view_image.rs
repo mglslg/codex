@@ -232,7 +232,6 @@ impl ToolOutput for ViewImageOutput {
         };
 
         ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: call_id.to_string(),
             output,
         }

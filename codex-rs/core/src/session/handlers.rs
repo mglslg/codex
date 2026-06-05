@@ -917,7 +917,6 @@ Approved action:
 {approved_action_json}"#,
     );
     let items = vec![ResponseItem::from(ResponseInputItem::Message {
-        id: None,
         role: "developer".to_string(),
         content: vec![ContentItem::InputText { text }],
         phase: None,

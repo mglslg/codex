@@ -486,7 +486,6 @@ pub(crate) async fn handle_output_item_done(
         // The tool request should be answered directly (or was denied); push that response into the transcript.
         Err(FunctionCallError::RespondToModel(message)) => {
             let response = ResponseInputItem::FunctionCallOutput {
-                id: None,
                 call_id: String::new(),
                 output: FunctionCallOutputPayload {
                     body: FunctionCallOutputBody::Text(message),
@@ -621,52 +620,8 @@ fn completed_item_defers_mailbox_delivery_to_next_turn(
 
 pub(crate) fn response_input_to_response_item(input: &ResponseInputItem) -> Option<ResponseItem> {
     match input {
-        ResponseInputItem::FunctionCallOutput {
-            id,
-            call_id,
-            output,
-        } => Some(ResponseItem::FunctionCallOutput {
-            id: id.clone(),
-            call_id: call_id.clone(),
-            output: output.clone(),
-        }),
-        ResponseInputItem::CustomToolCallOutput {
-            id,
-            call_id,
-            name,
-            output,
-        } => Some(ResponseItem::CustomToolCallOutput {
-            id: id.clone(),
-            call_id: call_id.clone(),
-            name: name.clone(),
-            output: output.clone(),
-        }),
-        ResponseInputItem::McpToolCallOutput {
-            id,
-            call_id,
-            output,
-        } => {
-            let output = output.as_function_call_output_payload();
-            Some(ResponseItem::FunctionCallOutput {
-                id: id.clone(),
-                call_id: call_id.clone(),
-                output,
-            })
-        }
-        ResponseInputItem::ToolSearchOutput {
-            id,
-            call_id,
-            status,
-            execution,
-            tools,
-        } => Some(ResponseItem::ToolSearchOutput {
-            id: id.clone(),
-            call_id: Some(call_id.clone()),
-            status: status.clone(),
-            execution: execution.clone(),
-            tools: tools.clone(),
-        }),
-        _ => None,
+        ResponseInputItem::Message { .. } => None,
+        _ => Some(input.clone().into()),
     }
 }
 

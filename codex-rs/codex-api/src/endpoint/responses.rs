@@ -5,7 +5,6 @@ use crate::endpoint::session::EndpointSession;
 use crate::error::ApiError;
 use crate::provider::Provider;
 use crate::requests::Compression;
-use crate::requests::attach_item_ids;
 use crate::requests::headers::build_session_headers;
 use crate::requests::headers::insert_header;
 use crate::requests::headers::subagent_header;
@@ -14,6 +13,7 @@ use crate::telemetry::SseTelemetry;
 use codex_client::HttpTransport;
 use codex_client::RequestCompression;
 use codex_client::RequestTelemetry;
+use codex_protocol::models::attach_response_item_ids_to_input;
 use codex_protocol::protocol::SessionSource;
 use http::HeaderMap;
 use http::HeaderValue;
@@ -88,7 +88,7 @@ impl<T: HttpTransport> ResponsesClient<T> {
         if include_item_ids
             || (request.store && self.session.provider().is_azure_responses_endpoint())
         {
-            attach_item_ids(&mut body, &request.input);
+            attach_response_item_ids_to_input(&mut body, &request.input);
         }
 
         let mut headers = extra_headers;

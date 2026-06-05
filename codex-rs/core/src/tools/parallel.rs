@@ -187,14 +187,12 @@ impl ToolCallRuntime {
         let message = err.to_string();
         match call.payload {
             ToolPayload::ToolSearch { .. } => ResponseInputItem::ToolSearchOutput {
-                id: None,
                 call_id: call.call_id,
                 status: "completed".to_string(),
                 execution: "client".to_string(),
                 tools: Vec::new(),
             },
             ToolPayload::Custom { .. } => ResponseInputItem::CustomToolCallOutput {
-                id: None,
                 call_id: call.call_id,
                 name: None,
                 output: codex_protocol::models::FunctionCallOutputPayload {
@@ -203,7 +201,6 @@ impl ToolCallRuntime {
                 },
             },
             _ => ResponseInputItem::FunctionCallOutput {
-                id: None,
                 call_id: call.call_id,
                 output: codex_protocol::models::FunctionCallOutputPayload {
                     body: codex_protocol::models::FunctionCallOutputBody::Text(message),
@@ -453,7 +450,6 @@ mod tests {
             .expect("timed out waiting for tool response")
             .expect("tool response task should join")?;
         let expected_response = ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: "call-1".to_string(),
             output: FunctionCallOutputPayload {
                 body: FunctionCallOutputBody::Text("ok".to_string()),

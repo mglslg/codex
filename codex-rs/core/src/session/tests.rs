@@ -243,7 +243,10 @@ fn response_items_without_ids(items: &[ResponseItem]) -> Vec<ResponseItem> {
         .collect()
 }
 
-fn assert_response_items_eq_ignoring_ids(actual: &[ResponseItem], expected: &[ResponseItem]) {
+pub(crate) fn assert_response_items_eq_ignoring_ids(
+    actual: &[ResponseItem],
+    expected: &[ResponseItem],
+) {
     assert_eq!(
         response_items_without_ids(actual),
         response_items_without_ids(expected)
@@ -10489,7 +10492,7 @@ async fn sample_rollout(
     }
     let initial_context = initial_context
         .into_iter()
-        .map(ResponseItem::with_client_generated_id)
+        .map(ResponseItem::with_new_client_generated_id_if_missing)
         .collect::<Vec<_>>();
     for item in &initial_context {
         rollout_items.push(RolloutItem::ResponseItem(item.clone()));
@@ -10507,7 +10510,7 @@ async fn sample_rollout(
         }],
         phase: None,
     }
-    .with_client_generated_id();
+    .with_new_client_generated_id_if_missing();
     live_history.record_items(
         std::iter::once(&user1),
         reconstruction_turn.truncation_policy,
@@ -10522,7 +10525,7 @@ async fn sample_rollout(
         }],
         phase: None,
     }
-    .with_client_generated_id();
+    .with_new_client_generated_id_if_missing();
     live_history.record_items(
         std::iter::once(&assistant1),
         reconstruction_turn.truncation_policy,
@@ -10536,7 +10539,7 @@ async fn sample_rollout(
     let user_messages1 = collect_user_messages(&snapshot1);
     let rebuilt1 = compact::build_compacted_history(Vec::new(), &user_messages1, summary1)
         .into_iter()
-        .map(ResponseItem::with_client_generated_id)
+        .map(ResponseItem::with_new_client_generated_id_if_missing)
         .collect::<Vec<_>>();
     live_history.replace(rebuilt1.clone());
     rollout_items.push(RolloutItem::Compacted(CompactedItem {
@@ -10552,7 +10555,7 @@ async fn sample_rollout(
         }],
         phase: None,
     }
-    .with_client_generated_id();
+    .with_new_client_generated_id_if_missing();
     live_history.record_items(
         std::iter::once(&user2),
         reconstruction_turn.truncation_policy,
@@ -10567,7 +10570,7 @@ async fn sample_rollout(
         }],
         phase: None,
     }
-    .with_client_generated_id();
+    .with_new_client_generated_id_if_missing();
     live_history.record_items(
         std::iter::once(&assistant2),
         reconstruction_turn.truncation_policy,
@@ -10581,7 +10584,7 @@ async fn sample_rollout(
     let user_messages2 = collect_user_messages(&snapshot2);
     let rebuilt2 = compact::build_compacted_history(Vec::new(), &user_messages2, summary2)
         .into_iter()
-        .map(ResponseItem::with_client_generated_id)
+        .map(ResponseItem::with_new_client_generated_id_if_missing)
         .collect::<Vec<_>>();
     live_history.replace(rebuilt2.clone());
     rollout_items.push(RolloutItem::Compacted(CompactedItem {
@@ -10597,7 +10600,7 @@ async fn sample_rollout(
         }],
         phase: None,
     }
-    .with_client_generated_id();
+    .with_new_client_generated_id_if_missing();
     live_history.record_items(
         std::iter::once(&user3),
         reconstruction_turn.truncation_policy,
@@ -10612,7 +10615,7 @@ async fn sample_rollout(
         }],
         phase: None,
     }
-    .with_client_generated_id();
+    .with_new_client_generated_id_if_missing();
     live_history.record_items(
         std::iter::once(&assistant3),
         reconstruction_turn.truncation_policy,

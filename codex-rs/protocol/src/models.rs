@@ -666,9 +666,6 @@ impl From<&FileSystemPermissions> for FileSystemSandboxPolicy {
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum ResponseInputItem {
     Message {
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        #[ts(optional)]
-        id: Option<String>,
         role: String,
         content: Vec<ContentItem>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -676,25 +673,16 @@ pub enum ResponseInputItem {
         phase: Option<MessagePhase>,
     },
     FunctionCallOutput {
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        #[ts(optional)]
-        id: Option<String>,
         call_id: String,
         #[ts(as = "FunctionCallOutputBody")]
         #[schemars(with = "FunctionCallOutputBody")]
         output: FunctionCallOutputPayload,
     },
     McpToolCallOutput {
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        #[ts(optional)]
-        id: Option<String>,
         call_id: String,
         output: CallToolResult,
     },
     CustomToolCallOutput {
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        #[ts(optional)]
-        id: Option<String>,
         call_id: String,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         #[ts(optional)]
@@ -704,9 +692,6 @@ pub enum ResponseInputItem {
         output: FunctionCallOutputPayload,
     },
     ToolSearchOutput {
-        #[serde(default, skip_serializing_if = "Option::is_none")]
-        #[ts(optional)]
-        id: Option<String>,
         call_id: String,
         status: String,
         execution: String,
@@ -963,87 +948,12 @@ fn client_generated_response_item_id(
     )
 }
 
-impl ResponseInputItem {
-    pub fn with_client_generated_id(self) -> Self {
-        match self {
-            Self::Message {
-                id,
-                role,
-                content,
-                phase,
-            } => Self::Message {
-                id: client_generated_response_item_id(
-                    id,
-                    ClientGeneratedResponseItemIdKind::Message,
-                ),
-                role,
-                content,
-                phase,
-            },
-            Self::FunctionCallOutput {
-                id,
-                call_id,
-                output,
-            } => Self::FunctionCallOutput {
-                id: client_generated_response_item_id(
-                    id,
-                    ClientGeneratedResponseItemIdKind::FunctionCallOutput,
-                ),
-                call_id,
-                output,
-            },
-            Self::McpToolCallOutput {
-                id,
-                call_id,
-                output,
-            } => Self::McpToolCallOutput {
-                id: client_generated_response_item_id(
-                    id,
-                    ClientGeneratedResponseItemIdKind::FunctionCallOutput,
-                ),
-                call_id,
-                output,
-            },
-            Self::CustomToolCallOutput {
-                id,
-                call_id,
-                name,
-                output,
-            } => Self::CustomToolCallOutput {
-                id: client_generated_response_item_id(
-                    id,
-                    ClientGeneratedResponseItemIdKind::CustomToolCallOutput,
-                ),
-                call_id,
-                name,
-                output,
-            },
-            Self::ToolSearchOutput {
-                id,
-                call_id,
-                status,
-                execution,
-                tools,
-            } => Self::ToolSearchOutput {
-                id: client_generated_response_item_id(
-                    id,
-                    ClientGeneratedResponseItemIdKind::ToolSearchOutput,
-                ),
-                call_id,
-                status,
-                execution,
-                tools,
-            },
-        }
-    }
-}
-
 impl ResponseItem {
     /// Ensures a newly created Codex-originated item has a stable Responses API ID.
     ///
     /// Do not use this for items loaded from rollout history: missing historical IDs must remain
     /// omitted so replay does not invent new identities.
-    pub fn with_client_generated_id(self) -> Self {
+    pub fn with_new_client_generated_id_if_missing(self) -> Self {
         match self {
             Self::Message {
                 id,
@@ -1361,58 +1271,62 @@ pub fn local_image_content_items_with_label_number(
 
 impl From<ResponseInputItem> for ResponseItem {
     fn from(item: ResponseInputItem) -> Self {
-        match item.with_client_generated_id() {
+        match item {
             ResponseInputItem::Message {
-                id,
                 role,
                 content,
                 phase,
             } => Self::Message {
                 role,
                 content,
-                id,
+                id: client_generated_response_item_id(
+                    None,
+                    ClientGeneratedResponseItemIdKind::Message,
+                ),
                 phase,
             },
-            ResponseInputItem::FunctionCallOutput {
-                id,
-                call_id,
-                output,
-            } => Self::FunctionCallOutput {
-                id,
+            ResponseInputItem::FunctionCallOutput { call_id, output } => Self::FunctionCallOutput {
+                id: client_generated_response_item_id(
+                    None,
+                    ClientGeneratedResponseItemIdKind::FunctionCallOutput,
+                ),
                 call_id,
                 output,
             },
-            ResponseInputItem::McpToolCallOutput {
-                id,
-                call_id,
-                output,
-            } => {
+            ResponseInputItem::McpToolCallOutput { call_id, output } => {
                 let output = output.into_function_call_output_payload();
                 Self::FunctionCallOutput {
-                    id,
+                    id: client_generated_response_item_id(
+                        None,
+                        ClientGeneratedResponseItemIdKind::FunctionCallOutput,
+                    ),
                     call_id,
                     output,
                 }
             }
             ResponseInputItem::CustomToolCallOutput {
-                id,
                 call_id,
                 name,
                 output,
             } => Self::CustomToolCallOutput {
-                id,
+                id: client_generated_response_item_id(
+                    None,
+                    ClientGeneratedResponseItemIdKind::CustomToolCallOutput,
+                ),
                 call_id,
                 name,
                 output,
             },
             ResponseInputItem::ToolSearchOutput {
-                id,
                 call_id,
                 status,
                 execution,
                 tools,
             } => Self::ToolSearchOutput {
-                id,
+                id: client_generated_response_item_id(
+                    None,
+                    ClientGeneratedResponseItemIdKind::ToolSearchOutput,
+                ),
                 call_id: Some(call_id),
                 status,
                 execution,
@@ -1492,7 +1406,6 @@ impl From<Vec<UserInput>> for ResponseInputItem {
     fn from(items: Vec<UserInput>) -> Self {
         let mut image_index = 0;
         Self::Message {
-            id: None,
             role: "user".to_string(),
             content: items
                 .into_iter()
@@ -1921,7 +1834,6 @@ mod tests {
     #[test]
     fn response_input_message_conversion_preserves_phase() {
         let item = ResponseItem::from(ResponseInputItem::Message {
-            id: None,
             role: "assistant".to_string(),
             content: vec![ContentItem::OutputText {
                 text: "still working".to_string(),
@@ -1950,43 +1862,26 @@ mod tests {
     }
 
     #[test]
-    fn response_input_message_conversion_preserves_existing_id() {
-        let item = ResponseItem::from(ResponseInputItem::Message {
+    fn client_generated_response_item_ids_preserve_existing_ids() {
+        let item = ResponseItem::Message {
             id: Some("msg_existing".to_string()),
-            role: "assistant".to_string(),
-            content: vec![ContentItem::OutputText {
+            role: "user".to_string(),
+            content: vec![ContentItem::InputText {
                 text: "still working".to_string(),
             }],
             phase: Some(MessagePhase::Commentary),
-        });
+        }
+        .with_new_client_generated_id_if_missing();
 
         assert_eq!(
             item,
             ResponseItem::Message {
                 id: Some("msg_existing".to_string()),
-                role: "assistant".to_string(),
-                content: vec![ContentItem::OutputText {
+                role: "user".to_string(),
+                content: vec![ContentItem::InputText {
                     text: "still working".to_string(),
                 }],
                 phase: Some(MessagePhase::Commentary),
-            }
-        );
-    }
-
-    #[test]
-    fn response_input_tool_output_conversion_preserves_existing_id() {
-        let item = ResponseItem::from(ResponseInputItem::FunctionCallOutput {
-            id: Some("fco_existing".to_string()),
-            call_id: "call_1".to_string(),
-            output: FunctionCallOutputPayload::from_text("ok".to_string()),
-        });
-
-        assert_eq!(
-            item,
-            ResponseItem::FunctionCallOutput {
-                id: Some("fco_existing".to_string()),
-                call_id: "call_1".to_string(),
-                output: FunctionCallOutputPayload::from_text("ok".to_string()),
             }
         );
     }
@@ -2015,7 +1910,7 @@ mod tests {
             content: Vec::new(),
             phase: None,
         }
-        .with_client_generated_id() else {
+        .with_new_client_generated_id_if_missing() else {
             panic!("expected message id");
         };
 
@@ -2049,13 +1944,23 @@ mod tests {
         };
 
         assert_eq!(
-            assistant_message.clone().with_client_generated_id(),
+            assistant_message
+                .clone()
+                .with_new_client_generated_id_if_missing(),
             assistant_message
         );
-        assert_eq!(reasoning.clone().with_client_generated_id(), reasoning);
-        assert_eq!(compaction.clone().with_client_generated_id(), compaction);
         assert_eq!(
-            server_tool_search_output.clone().with_client_generated_id(),
+            reasoning.clone().with_new_client_generated_id_if_missing(),
+            reasoning
+        );
+        assert_eq!(
+            compaction.clone().with_new_client_generated_id_if_missing(),
+            compaction
+        );
+        assert_eq!(
+            server_tool_search_output
+                .clone()
+                .with_new_client_generated_id_if_missing(),
             server_tool_search_output
         );
     }
@@ -2721,7 +2626,6 @@ mod tests {
     #[test]
     fn serializes_success_as_plain_string() -> Result<()> {
         let item = ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: "call1".into(),
             output: FunctionCallOutputPayload::from_text("ok".into()),
         };
@@ -2737,7 +2641,6 @@ mod tests {
     #[test]
     fn serializes_failure_as_string() -> Result<()> {
         let item = ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: "call1".into(),
             output: FunctionCallOutputPayload {
                 body: FunctionCallOutputBody::Text("bad".into()),
@@ -2784,7 +2687,6 @@ mod tests {
         );
 
         let item = ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: "call1".into(),
             output: payload,
         };
@@ -2801,7 +2703,6 @@ mod tests {
     #[test]
     fn serializes_custom_tool_image_outputs_as_array() -> Result<()> {
         let item = ResponseInputItem::CustomToolCallOutput {
-            id: None,
             call_id: "call1".into(),
             name: None,
             output: FunctionCallOutputPayload::from_content_items(vec![
@@ -2824,7 +2725,6 @@ mod tests {
     #[test]
     fn serializes_encrypted_function_output_content_as_array() -> Result<()> {
         let item = ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: "call1".into(),
             output: FunctionCallOutputPayload::from_content_items(vec![
                 FunctionCallOutputContentItem::EncryptedContent {
@@ -3255,7 +3155,6 @@ mod tests {
     #[test]
     fn tool_search_output_roundtrips() -> Result<()> {
         let input = ResponseInputItem::ToolSearchOutput {
-            id: None,
             call_id: "search-1".to_string(),
             status: "completed".to_string(),
             execution: "client".to_string(),

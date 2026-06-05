@@ -27,7 +27,6 @@ impl ToolOutput for EncryptedSearchOutput {
         // TODO: Make standalone search honor memories.disable_on_external_context,
         // as hosted web search does.
         ResponseInputItem::FunctionCallOutput {
-            id: None,
             call_id: call_id.to_string(),
             output: FunctionCallOutputPayload::from_content_items(vec![
                 FunctionCallOutputContentItem::EncryptedContent {
@@ -61,7 +60,6 @@ mod tests {
                 },
             ),
             ResponseInputItem::FunctionCallOutput {
-                id: None,
                 call_id: "call-1".to_string(),
                 output: FunctionCallOutputPayload::from_content_items(vec![
                     FunctionCallOutputContentItem::EncryptedContent {

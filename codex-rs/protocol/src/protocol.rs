@@ -713,7 +713,6 @@ impl InterAgentCommunication {
 
     pub fn to_response_input_item(&self) -> ResponseInputItem {
         ResponseInputItem::Message {
-            id: None,
             role: "assistant".to_string(),
             content: vec![ContentItem::OutputText {
                 text: serde_json::to_string(self).unwrap_or_default(),
@@ -4099,7 +4098,6 @@ mod tests {
         assert_eq!(
             communication.to_response_input_item(),
             ResponseInputItem::Message {
-                id: None,
                 role: "assistant".to_string(),
                 content: vec![ContentItem::OutputText {
                     text: serde_json::to_string(&communication).expect("serialize communication"),

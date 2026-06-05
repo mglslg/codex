@@ -34,13 +34,6 @@ fn user_message(text: &str) -> ResponseItem {
     }
 }
 
-fn assert_response_items_eq_ignoring_ids(actual: &[ResponseItem], expected: &[ResponseItem]) {
-    assert_eq!(
-        serde_json::to_value(actual).expect("serialize actual response items"),
-        serde_json::to_value(expected).expect("serialize expected response items"),
-    );
-}
-
 #[test]
 fn content_items_to_text_joins_non_empty_segments() {
     let items = vec![
@@ -302,7 +295,7 @@ async fn process_compacted_history_replaces_developer_messages() {
         }],
         phase: None,
     });
-    assert_response_items_eq_ignoring_ids(&refreshed, &expected);
+    crate::session::tests::assert_response_items_eq_ignoring_ids(&refreshed, &expected);
 }
 
 #[tokio::test]
@@ -328,9 +321,9 @@ async fn process_compacted_history_reinjects_full_initial_context() {
         }],
         phase: None,
     });
-    assert_response_items_eq_ignoring_ids(&refreshed, &expected);
+    crate::session::tests::assert_response_items_eq_ignoring_ids(&refreshed, &expected);
     let reinjected_initial_context = &refreshed[..expected.len() - 1];
-    assert_response_items_eq_ignoring_ids(
+    crate::session::tests::assert_response_items_eq_ignoring_ids(
         reinjected_initial_context,
         &expected[..expected.len() - 1],
     );
@@ -411,7 +404,7 @@ keep me updated
         }],
         phase: None,
     });
-    assert_response_items_eq_ignoring_ids(&refreshed, &expected);
+    crate::session::tests::assert_response_items_eq_ignoring_ids(&refreshed, &expected);
 }
 
 #[tokio::test]
@@ -436,7 +429,7 @@ async fn process_compacted_history_drops_legacy_warnings() {
     .await;
     let mut expected = initial_context;
     expected.push(latest_user);
-    assert_response_items_eq_ignoring_ids(&refreshed, &expected);
+    crate::session::tests::assert_response_items_eq_ignoring_ids(&refreshed, &expected);
 }
 
 #[tokio::test]
@@ -500,7 +493,7 @@ async fn process_compacted_history_inserts_context_before_last_real_user_message
         }],
         phase: None,
     });
-    assert_response_items_eq_ignoring_ids(&refreshed, &expected);
+    crate::session::tests::assert_response_items_eq_ignoring_ids(&refreshed, &expected);
 }
 
 #[tokio::test]
@@ -542,7 +535,7 @@ async fn process_compacted_history_reinjects_model_switch_message() {
         }],
         phase: None,
     });
-    assert_response_items_eq_ignoring_ids(&refreshed, &expected);
+    crate::session::tests::assert_response_items_eq_ignoring_ids(&refreshed, &expected);
 }
 
 #[test]

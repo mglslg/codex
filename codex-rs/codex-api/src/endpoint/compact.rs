@@ -3,10 +3,10 @@ use crate::common::CompactionInput;
 use crate::endpoint::session::EndpointSession;
 use crate::error::ApiError;
 use crate::provider::Provider;
-use crate::requests::attach_item_ids;
 use codex_client::HttpTransport;
 use codex_client::RequestTelemetry;
 use codex_protocol::models::ResponseItem;
+use codex_protocol::models::attach_response_item_ids_to_input;
 use http::HeaderMap;
 use http::Method;
 use serde::Deserialize;
@@ -68,7 +68,7 @@ impl<T: HttpTransport> CompactClient<T> {
         let mut body = to_value(input)
             .map_err(|e| ApiError::Stream(format!("failed to encode compaction input: {e}")))?;
         if include_item_ids {
-            attach_item_ids(&mut body, input.input);
+            attach_response_item_ids_to_input(&mut body, input.input);
         }
         self.compact(body, extra_headers, request_timeout).await
     }

@@ -102,7 +102,6 @@ pub trait ContextualUserFragment {
         Self: Sized,
     {
         ResponseInputItem::Message {
-            id: None,
             role: self.role().to_string(),
             content: vec![ContentItem::InputText {
                 text: self.render(),

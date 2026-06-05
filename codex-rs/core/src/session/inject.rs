@@ -22,7 +22,7 @@ impl Session {
     ) -> Result<(), Vec<ResponseItem>> {
         let input = input
             .into_iter()
-            .map(ResponseItem::with_client_generated_id)
+            .map(ResponseItem::with_new_client_generated_id_if_missing)
             .collect::<Vec<_>>();
         let mut active = self.active_turn.lock().await;
         match active.as_mut() {
@@ -52,7 +52,7 @@ impl Session {
     ) -> Result<(), TryStartTurnIfIdleError> {
         let input = input
             .into_iter()
-            .map(ResponseItem::with_client_generated_id)
+            .map(ResponseItem::with_new_client_generated_id_if_missing)
             .collect::<Vec<_>>();
         if input.is_empty() {
             return Ok(());
