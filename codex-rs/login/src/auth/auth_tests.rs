@@ -1,4 +1,5 @@
 use super::*;
+use crate::AuthRouteConfig;
 use crate::auth::storage::FileAuthStorage;
 use crate::auth::storage::get_auth_file;
 use crate::token_data::IdTokenInfo;
@@ -211,6 +212,7 @@ async fn pro_account_with_no_api_key_uses_chatgpt_auth() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .unwrap()
@@ -267,6 +269,7 @@ async fn loads_api_key_from_auth_json() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .unwrap()
@@ -344,6 +347,7 @@ async fn refresh_failure_is_scoped_to_the_matching_auth_snapshot() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("load auth")
@@ -362,6 +366,7 @@ async fn refresh_failure_is_scoped_to_the_matching_auth_snapshot() {
         updated_auth_dot_json,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("updated auth should parse");
@@ -745,6 +750,7 @@ async fn load_auth_reads_access_token_from_env() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         Some(&chatgpt_base_url),
+        /*auth_route_config*/ None,
     )
     .await
     .expect("env auth should load")
@@ -776,6 +782,7 @@ async fn load_auth_keeps_codex_api_key_env_precedence() {
         /*enable_codex_api_key_env*/ true,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("env auth should load")
@@ -1132,9 +1139,31 @@ async fn agent_identity_plan_type_maps_raw_education_alias() {
     assert_agent_identity_plan_alias(json!("education"), AccountPlanType::Edu).await;
 }
 
+#[tokio::test]
+#[serial(codex_auth_env)]
+async fn agent_identity_auth_with_auth_route_config_loads() {
+    let auth_route_config = AuthRouteConfig::direct();
+
+    assert_agent_identity_auth_loads(json!("pro"), AccountPlanType::Pro, Some(&auth_route_config))
+        .await
+}
+
 async fn assert_agent_identity_plan_alias(
     plan_type: serde_json::Value,
     expected_plan_type: AccountPlanType,
+) {
+    assert_agent_identity_auth_loads(
+        plan_type,
+        expected_plan_type,
+        /*auth_route_config*/ None,
+    )
+    .await;
+}
+
+async fn assert_agent_identity_auth_loads(
+    plan_type: serde_json::Value,
+    expected_plan_type: AccountPlanType,
+    auth_route_config: Option<&AuthRouteConfig>,
 ) {
     let record = agent_identity_record("account-id");
     let jwt = signed_agent_identity_jwt(&record, plan_type).expect("agent identity jwt");
@@ -1156,9 +1185,13 @@ async fn assert_agent_identity_plan_alias(
     let chatgpt_base_url = format!("{}/backend-api", server.uri());
     let _authapi_guard =
         EnvVarGuard::set("CODEX_AGENT_IDENTITY_AUTHAPI_BASE_URL", &chatgpt_base_url);
-    let auth = CodexAuth::from_agent_identity_jwt(&jwt, Some(&chatgpt_base_url))
-        .await
-        .expect("agent identity auth");
+    let auth = CodexAuth::from_agent_identity_jwt_with_auth_route_config(
+        &jwt,
+        Some(&chatgpt_base_url),
+        auth_route_config,
+    )
+    .await
+    .expect("agent identity auth");
 
     pretty_assertions::assert_eq!(auth.account_plan_type(), Some(expected_plan_type));
     server.verify().await;
@@ -1184,6 +1217,7 @@ async fn plan_type_maps_known_plan() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("load auth")
@@ -1212,6 +1246,7 @@ async fn plan_type_maps_self_serve_business_usage_based_plan() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("load auth")
@@ -1243,6 +1278,7 @@ async fn plan_type_maps_enterprise_cbp_usage_based_plan() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("load auth")
@@ -1274,6 +1310,7 @@ async fn plan_type_maps_unknown_to_unknown() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("load auth")
@@ -1302,6 +1339,7 @@ async fn missing_plan_type_maps_to_unknown() {
         /*enable_codex_api_key_env*/ false,
         AuthCredentialsStoreMode::File,
         /*chatgpt_base_url*/ None,
+        /*auth_route_config*/ None,
     )
     .await
     .expect("load auth")
