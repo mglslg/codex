@@ -2890,14 +2890,14 @@ pub struct CompactedItem {
 
 impl From<CompactedItem> for ResponseItem {
     fn from(value: CompactedItem) -> Self {
-        ResponseItem::from(ResponseInputItem::Message {
+        ResponseItem::Message {
             id: None,
             role: "assistant".to_string(),
             content: vec![ContentItem::OutputText {
                 text: value.message,
             }],
             phase: None,
-        })
+        }
     }
 }
 

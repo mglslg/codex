@@ -623,7 +623,14 @@ async fn spawn_agent_can_fork_parent_thread_history_with_sanitized_items() {
                     phase: None,
                 },
                 assistant_message("parent commentary", Some(MessagePhase::Commentary)),
-                assistant_message("parent final answer", Some(MessagePhase::FinalAnswer)),
+                ResponseItem::Message {
+                    id: Some("msg_parent_final_answer".to_string()),
+                    role: "assistant".to_string(),
+                    content: vec![ContentItem::OutputText {
+                        text: "parent final answer".to_string(),
+                    }],
+                    phase: Some(MessagePhase::FinalAnswer),
+                },
                 assistant_message("parent unknown phase", /*phase*/ None),
                 ResponseItem::Reasoning {
                     id: "parent-reasoning".to_string(),
