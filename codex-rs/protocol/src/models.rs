@@ -980,9 +980,20 @@ impl ResponseItem {
     /// omitted so replay does not invent new identities.
     pub fn with_new_client_generated_id_if_missing(self) -> Self {
         match self {
-            item @ Self::Message { ref role, .. } if role != "assistant" => {
-                item.with_new_client_generated_message_id_if_missing()
-            }
+            Self::Message {
+                id,
+                role,
+                content,
+                phase,
+            } if role != "assistant" => Self::Message {
+                id: client_generated_response_item_id(
+                    id,
+                    ClientGeneratedResponseItemIdKind::Message,
+                ),
+                role,
+                content,
+                phase,
+            },
             Self::FunctionCallOutput {
                 id,
                 call_id,
