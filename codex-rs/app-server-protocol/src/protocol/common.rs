@@ -1607,6 +1607,8 @@ mod tests {
     use anyhow::Result;
     use codex_protocol::ThreadId;
     use codex_protocol::account::PlanType;
+    use codex_protocol::mcp::McpAppUiCapability;
+    use codex_protocol::mcp::McpClientCapabilities;
     use codex_protocol::models::BUILT_IN_PERMISSION_PROFILE_READ_ONLY;
     use codex_protocol::parse_command::ParsedCommand;
     use codex_protocol::protocol::RealtimeConversationVersion;
@@ -2096,6 +2098,7 @@ mod tests {
                         "thread/started".to_string(),
                         "item/agentMessage/delta".to_string(),
                     ]),
+                    mcp_client_capabilities: None,
                 }),
             },
         };
@@ -2117,6 +2120,58 @@ mod tests {
                             "thread/started",
                             "item/agentMessage/delta"
                         ]
+                    }
+                }
+            }),
+            serde_json::to_value(&request)?,
+        );
+        Ok(())
+    }
+
+    #[test]
+    fn serialize_initialize_with_mcp_client_capabilities() -> Result<()> {
+        let capabilities = McpClientCapabilities {
+            app_ui: [
+                McpAppUiCapability::WebView,
+                McpAppUiCapability::DeclarativeUi,
+            ]
+            .into_iter()
+            .collect(),
+        };
+        let request = ClientRequest::Initialize {
+            request_id: RequestId::Integer(42),
+            params: v1::InitializeParams {
+                client_info: v1::ClientInfo {
+                    name: "codex_app".to_string(),
+                    title: Some("Codex App".to_string()),
+                    version: "0.1.0".to_string(),
+                },
+                capabilities: Some(v1::InitializeCapabilities {
+                    experimental_api: false,
+                    request_attestation: false,
+                    opt_out_notification_methods: None,
+                    mcp_client_capabilities: Some(capabilities),
+                }),
+            },
+        };
+
+        assert_eq!(
+            json!({
+                "method": "initialize",
+                "id": 42,
+                "params": {
+                    "clientInfo": {
+                        "name": "codex_app",
+                        "title": "Codex App",
+                        "version": "0.1.0"
+                    },
+                    "capabilities": {
+                        "experimentalApi": false,
+                        "requestAttestation": false,
+                        "optOutNotificationMethods": null,
+                        "mcpClientCapabilities": {
+                            "appUi": ["webView", "declarativeUi"]
+                        }
                     }
                 }
             }),
@@ -2164,6 +2219,7 @@ mod tests {
                             "thread/started".to_string(),
                             "item/agentMessage/delta".to_string(),
                         ]),
+                        mcp_client_capabilities: None,
                     }),
                 },
             }
