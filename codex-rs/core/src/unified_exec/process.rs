@@ -31,6 +31,7 @@ use super::head_tail_buffer::HeadTailBuffer;
 use super::process_state::ProcessState;
 
 const EARLY_EXIT_GRACE_PERIOD: Duration = Duration::from_millis(150);
+const INTERRUPT_EXIT_CODE: i32 = 130;
 
 pub(crate) trait SpawnLifecycle: std::fmt::Debug + Send + Sync {
     /// Returns file descriptors that must stay open across the child `exec()`.
@@ -210,6 +211,11 @@ impl UnifiedExecProcess {
         if let Some(output_task) = &self.output_task {
             output_task.abort();
         }
+    }
+
+    pub(super) fn interrupt(&self) {
+        self.signal_exit(Some(INTERRUPT_EXIT_CODE));
+        self.terminate();
     }
 
     pub(super) fn fail_and_terminate(&self, message: String) {
